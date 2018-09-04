@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Wez Furlong <wez@wezfurlong.org>"]
 description = "Panic using the JLINK RTT protocol"
 keywords = ["no-std", "arm", "cortex-m", "jlink", "rtt"]
+license = "BSD-3-Clause"
 repository = "https://github.com/wez/jlink_rtt"
 readme = "../README.md"
 
