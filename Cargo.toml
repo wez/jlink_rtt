@@ -1,0 +1,2 @@
+[workspace]
+members = ["rtt", "panic_rtt"]

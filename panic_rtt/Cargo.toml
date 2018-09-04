@@ -1,0 +1,15 @@
+[package]
+name = "panic_rtt"
+version = "0.1.0"
+authors = ["Wez Furlong <wez@wezfurlong.org>"]
+description = "Panic using the JLINK RTT protocol"
+keywords = ["no-std", "arm", "cortex-m", "jlink", "rtt"]
+repository = "https://github.com/wez/jlink_rtt"
+readme = "../README.md"
+
+[dependencies]
+cortex-m = "~0.5"
+
+[dependencies.jlink_rtt]
+version = "~0.1"
+path = "../rtt"
