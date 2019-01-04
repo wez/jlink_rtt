@@ -17,7 +17,6 @@
 //! ```
 #![deny(missing_docs)]
 #![deny(warnings)]
-#![feature(panic_handler)]
 #![no_std]
 
 extern crate cortex_m;
@@ -25,14 +24,18 @@ extern crate jlink_rtt;
 
 use core::fmt::Write;
 use core::panic::PanicInfo;
+use core::sync::atomic::{self, Ordering};
 use cortex_m::interrupt;
 
+#[inline(never)]
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     interrupt::disable();
 
     let mut out = jlink_rtt::Output::new();
-    writeln!(out, "{}", info);
+    writeln!(out, "{}", info).ok();
 
-    loop {}
+    loop {
+        atomic::compiler_fence(Ordering::SeqCst);
+    }
 }
