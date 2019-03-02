@@ -227,7 +227,7 @@ impl fmt::Write for NonBlockingOutput {
         if !self.blocked {
             unsafe {
                 _SEGGER_RTT.init();
-                if !_SEGGER_RTT.up.write(s.as_bytes(), true) {
+                if !_SEGGER_RTT.up.write(s.as_bytes(), false) {
                     self.blocked = true;
                 }
             }
