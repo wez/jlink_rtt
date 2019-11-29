@@ -39,15 +39,6 @@ struct Buffer {
 }
 
 impl Buffer {
-    unsafe fn init(&mut self, buf: &mut [u8]) {
-        self.name = b"Terminal\0".as_ptr();
-        self.buf_start = buf.as_mut_ptr();
-        self.size_of_buffer = buf.len() as u32;
-        self.write_offset = 0;
-        self.read_offset = 0;
-        self.flags = 0; // Non-blocking mode
-    }
-
     fn get_read_offset(&self) -> u32 {
         unsafe { ptr::read_volatile(&self.read_offset as *const u32) }
     }
@@ -143,44 +134,45 @@ pub struct ControlBlock {
 unsafe impl Sync for ControlBlock {}
 
 impl ControlBlock {
+    #[cfg(feature = "rtt_in_ram")]
     fn init(&mut self) {
-        if self.id[0] == b'S' {
-            return;
+        // In case the feature `rtt_in_ram` is used,
+        // init() modifies the ID of the RTT CB to allow identifying the
+        // RTT Control Block Structure in the data segment.
+        if _SEGGER_RTT.id[10] == 'I' {
+            _SEGGER_RTT.id[10] = '\0';
         }
-
-        unsafe {
-            self.up.init(&mut UP_BUF);
-            self.down.init(&mut DOWN_BUF);
-        }
-
-        // Compose the ident string such that we won't
-        // emit the string sequence in flash
-        self.id.copy_from_slice(b"_EGGER:RTT\0\0\0\0\0\0");
-        self.id[0] = b'S';
-        self.id[6] = b' ';
     }
+
+    #[cfg(not(feature = "rtt_in_ram"))]
+    fn init(&mut self) {}
 }
 
 #[no_mangle]
 pub static mut _SEGGER_RTT: ControlBlock = ControlBlock {
-    id: [0u8; 16],
+    #[cfg(feature = "rtt_in_ram")]
+    id: *b"SEGGER RTTI\0\0\0\0\0",
+
+    #[cfg(not(feature = "rtt_in_ram"))]
+    id: *b"SEGGER RTT\0\0\0\0\0\0",
+
     max_up_buffers: 1,
     max_down_buffers: 1,
     up: Buffer {
-        name: 0 as *const u8,
-        buf_start: 0 as *mut u8,
+        name: b"Terminal\0".as_ptr(),
+        buf_start: unsafe { &mut UP_BUF as *mut _ as *mut u8 },
+        size_of_buffer: unsafe { UP_BUF.len() as u32 },
         read_offset: 0,
         write_offset: 0,
         flags: 0,
-        size_of_buffer: 0,
     },
     down: Buffer {
-        name: 0 as *const u8,
-        buf_start: 0 as *mut u8,
+        name: b"Terminal\0".as_ptr(),
+        buf_start: unsafe { &mut DOWN_BUF as *mut _ as *mut u8 },
+        size_of_buffer: unsafe { DOWN_BUF.len() as u32 },
         write_offset: 0,
         read_offset: 0,
         flags: 0,
-        size_of_buffer: 0,
     },
 };
 
@@ -193,6 +185,9 @@ impl Output {
     /// Create a blocking output stream
     #[inline]
     pub fn new() -> Self {
+        unsafe {
+            _SEGGER_RTT.init();
+        }
         Self {}
     }
 }
@@ -200,7 +195,6 @@ impl Output {
 impl fmt::Write for Output {
     fn write_str(&mut self, s: &str) -> fmt::Result {
         unsafe {
-            _SEGGER_RTT.init();
             _SEGGER_RTT.up.write(s.as_bytes(), true);
         }
         Ok(())
@@ -218,6 +212,9 @@ impl NonBlockingOutput {
     /// Create a non-blocking output stream
     #[inline]
     pub fn new() -> Self {
+        unsafe {
+            _SEGGER_RTT.init();
+        }
         Self { blocked: false }
     }
 }
@@ -226,7 +223,6 @@ impl fmt::Write for NonBlockingOutput {
     fn write_str(&mut self, s: &str) -> fmt::Result {
         if !self.blocked {
             unsafe {
-                _SEGGER_RTT.init();
                 if !_SEGGER_RTT.up.write(s.as_bytes(), false) {
                     self.blocked = true;
                 }
