@@ -9,3 +9,9 @@ repository = "https://github.com/wez/jlink_rtt"
 readme = "../README.md"
 
 [dependencies]
+
+[features]
+# Use this when using RTT in RAM targets (init and data section both in RAM).
+# This prevents the host to falsly identify the RTT Callback Structure
+# in the init segment as the used Callback Structure.
+rtt_in_ram = []
