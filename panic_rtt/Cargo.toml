@@ -12,5 +12,5 @@ readme = "../README.md"
 cortex-m = "0.6.2"
 
 [dependencies.jlink_rtt]
-version = "~0.1"
+version = "~0.2"
 path = "../rtt"

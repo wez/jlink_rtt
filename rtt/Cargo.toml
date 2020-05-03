@@ -1,6 +1,6 @@
 [package]
 name = "jlink_rtt"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Wez Furlong <wez@wezfurlong.org>"]
 description = "Implements the JLINK RTT protocol"
 keywords = ["no-std", "arm", "cortex-m", "jlink", "rtt"]
